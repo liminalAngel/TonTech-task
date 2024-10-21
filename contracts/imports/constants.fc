@@ -1,0 +1,26 @@
+const op::deposit = 0xf9471134;
+const op::confirm_deal = 0x1dfc5e8f;
+const op::reject_deal = 0x7ae0bdec;
+const op::refund = 0xc135f40c;
+const op::excesses = 0xd53276db;
+const op::transfer_notification = 0x7362d09c;
+
+const op::deal_succeeded_seller_notification = 0xcc4158fb;
+const op::deal_succeeded_guarantor_notification = 0x28b554f5;
+
+const op::deal_failed_guarantor_notification = 0x9d2e3bcd;
+const op::deal_failed_seller_notification = 0xc07f109d;
+const op::deal_failed_buyer_notification = 0x6b03123c;
+
+const op::refund_notification = 0xf67efa32;
+
+const error::wrong_sender = 111;
+const error::insufficient_amount = 112;
+const error::insufficient_balance = 113;
+const error::insufficient_value_for_paying_fees = 114;
+const error::confirmation_deadline_not_come_yet = 115;
+const error::jetton_payment_required = 116;
+const error::confirmation_deadline_has_occured = 117;
+const error::unknown_op = 0xffff;
+
+const fee::gas_consumption = 20000000;

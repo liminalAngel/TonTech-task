@@ -1,0 +1,16 @@
+_ init?:Bool jetton_payment?:Bool deal_id:uint64 start_time:uint32 confirmation_duration:uint32 needed_amount:Coins buyer:MsgAddressInt seller:MsgAddressInt guarantor:MsgAddressInt guarantor_royalties:Coins escrow_jetton_wallet:MsgAddressInt = Storage;
+
+transfer_notification#7362d09c {Payload: Type}
+    query_id:uint64
+    amount:Coins
+    sender:MsgAddressInt
+    forward_payload:(Either Payload ^Payload)
+= JettonTransferNotification Payload;
+
+deposit#f9471134 query_id:uint64 = InternalMsgBody;
+
+confirm_deal#1dfc5e8f query_id:uint64 = InternalMsgBody;
+
+reject_deal#7ae0bdec query_id:uint64 = InternalMsgBody;
+
+refund#c135f40c query_id:uint64 = InternalMsgBody;
