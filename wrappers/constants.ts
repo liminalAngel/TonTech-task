@@ -3,6 +3,9 @@ export enum Opcodes {
     confirm_deal = 0x1dfc5e8f,
     reject_deal = 0x7ae0bdec,
     refund = 0xc135f40c,
+    transfer = 0xf8a7ea5,
+    internal_transfer = 0x178d4519,
+    transfer_notification = 0x7362d09c,
     excesses = 0xd53276db,
 
     deal_succeeded_seller_notification = 0xcc4158fb,

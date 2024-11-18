@@ -86,9 +86,10 @@ global slice storage::escrow_jetton_wallet;
     if (op == op::transfer_notification) {
         int jetton_amount = in_msg_body~load_coins();
         slice from_address = in_msg_body~load_msg_addr();
-        ifnot (equal_slices(sender, storage::escrow_jetton_wallet) | equal_slices(from_address, storage::buyer) | (jetton_amount >= storage::needed_amount) | (storage::jetton_payment?)) {
+        ifnot (equal_slices(sender, storage::escrow_jetton_wallet) & equal_slices(from_address, storage::buyer) & (jetton_amount >= storage::needed_amount) & (storage::jetton_payment?)) {
             builder msg = create_simple_transfer_body(query_id, jetton_amount, from_address);
             send_message(sender, 0, msg, 64);
+            return ();
         }
         storage::start_time = now();
         save_data();
@@ -107,19 +108,21 @@ global slice storage::escrow_jetton_wallet;
     if (op == op::confirm_deal) {
         throw_unless(error::wrong_sender, equal_slices(sender, storage::guarantor));
         throw_unless(error::confirmation_deadline_has_occured, now() < storage::start_time + storage::confirmation_duration);
-        throw_unless(error::insufficient_balance, my_balance >= storage::needed_amount + fee::gas_consumption);
 
-        int guarantor_fee = (storage::needed_amount * storage::guarantor_royalties) / 10000;
+        int guarantor_fee = muldiv(storage::needed_amount, storage::guarantor_royalties, 10000);
 
         if (storage::jetton_payment?) { ;; TO DO: fees
+            int fees = guarantor_fee ? fee::jetton_transfer * 2 : fee::jetton_transfer;
+            throw_unless(error::insufficient_balance, my_balance > fees);
             builder msg = create_simple_transfer_body(query_id, storage::needed_amount - guarantor_fee, storage::seller);
-            send_message(storage::escrow_jetton_wallet, 1, msg, 1);
+            send_message(storage::escrow_jetton_wallet, fee::jetton_transfer, msg, 1);
 
             if (guarantor_fee) {
                 builder msg = create_simple_transfer_body(query_id, guarantor_fee, storage::guarantor);
-                send_message(storage::escrow_jetton_wallet, 1, msg, 1);
+                send_message(storage::escrow_jetton_wallet, fee::jetton_transfer, msg, 1);
             }
         } else {
+            throw_unless(error::insufficient_balance, my_balance > storage::needed_amount + fee::gas_consumption);
             send_message(storage::seller, storage::needed_amount - guarantor_fee, begin_cell().store_uint(op::deal_succeeded_seller_notification, 32).store_uint(query_id, 64), 1);
 
             if (guarantor_fee) {
@@ -144,8 +147,9 @@ global slice storage::escrow_jetton_wallet;
     if (op == op::refund) {
         throw_unless(error::confirmation_deadline_not_come_yet, now() >= storage::start_time + storage::confirmation_duration);
         if (storage::jetton_payment?) {
+            throw_unless(error::insufficient_balance, my_balance > fee::jetton_transfer);
             builder msg = create_simple_transfer_body(query_id, storage::needed_amount, storage::buyer);
-            send_message(storage::escrow_jetton_wallet, 1, msg , 1);
+            send_message(storage::escrow_jetton_wallet, fee::jetton_transfer, msg, 1);
         } else {
             send_message(storage::buyer, storage::needed_amount, begin_cell().store_uint(op::refund_notification, 32).store_uint(query_id, 64), 1);
         }
@@ -156,9 +160,9 @@ global slice storage::escrow_jetton_wallet;
     throw(error::unknown_op);
 }
 
-(int, int, int, int, int, int, slice, slice, slice, int) get_storage_data() method_id {
+(int, int, int, int, int, int, slice, slice, slice, int, slice) get_storage_data() method_id {
     load_data();
     return (storage::init?, storage::jetton_payment?, storage::deal_id, storage::start_time, 
         storage::confirmation_duration, storage::needed_amount, storage::buyer, storage::seller, 
-        storage::guarantor, storage::guarantor_royalties);
+        storage::guarantor, storage::guarantor_royalties, storage::escrow_jetton_wallet);
 }

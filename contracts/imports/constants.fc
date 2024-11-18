@@ -24,3 +24,4 @@ const error::confirmation_deadline_has_occured = 117;
 const error::unknown_op = 0xffff;
 
 const fee::gas_consumption = 20000000;
+const fee::jetton_transfer = 55000000; 

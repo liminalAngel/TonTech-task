@@ -2,7 +2,6 @@ import { Address, beginCell, Cell, Contract, contractAddress, ContractProvider, 
 import { Opcodes } from './constants';
 
 export interface EscrowData {
-    init: boolean;
     jettonPayment: boolean;
     dealId: bigint;
     confirmationDuration: number;
@@ -13,13 +12,15 @@ export interface EscrowData {
     guarantorRoyalties: number;
 };
 
-export interface GetStaorageData extends EscrowData {
+export interface GetStorageData extends EscrowData {
+    init: boolean;
     startTime: number;
+    escrowWallet: Address | null;
 }
 
 export function escrowConfigToCell(config: EscrowData): Cell {
     return beginCell()
-        .storeBit(config.init)
+        .storeBit(false)
         .storeBit(config.jettonPayment)
         .storeUint(config.dealId, 64)
         .storeUint(0, 32)
@@ -74,12 +75,12 @@ export class Escrow implements Contract {
             sendMode: SendMode.PAY_GAS_SEPARATELY,
             body: beginCell()
                 .storeUint(opts.op, 32)
-                .storeUint(opts.queryId ?? 0n, 64)
+                .storeUint(opts.queryId ?? 0, 64)
             .endCell(),
         });
     }
 
-    async getStorageData(provider: ContractProvider): Promise<GetStaorageData> {
+    async getStorageData(provider: ContractProvider): Promise<GetStorageData> {
         const result = (await provider.get('get_storage_data', [])).stack;
         return {
             init: result.readBoolean(),
@@ -91,7 +92,8 @@ export class Escrow implements Contract {
             buyer: result.readAddress(),
             seller: result.readAddress(),
             guarantor: result.readAddress(),
-            guarantorRoyalties: result.readNumber()
+            guarantorRoyalties: result.readNumber(),
+            escrowWallet: result.readAddressOpt()
         }
     }
 }
